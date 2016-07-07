@@ -1,0 +1,175 @@
+;---------------
+;
+; comms
+;
+
+to chip-check
+clearcom
+send $ff output recc = 36
+end
+
+to dump :addr :len
+let [res [] line []]
+if :len = 0 [make "len 1]
+repeat int (:len + 15) / 16
+ [make "res se hw :addr "-
+  make "line rl :addr 16 make "addr :addr + 16
+  dotimes [i 16][make "res se :res hb nth :i :line]
+  print :res]
+end
+
+to go
+send $fa
+end
+
+to stopvm
+send 0
+end
+
+to erase-seg :addr
+send $fc
+send byte0 :addr
+send byte1 :addr
+;print hb recc
+ignore recc
+end
+
+to wl :addr :l
+send $fb
+send byte0 :addr
+send byte1 :addr
+send count :l
+dolist [i :l][send :i]
+end
+
+to wfl :addr :data
+loop
+ [if empty? :data [stop]
+  wfl1 :addr first64 :data
+  make "addr :addr + 64
+  make "data bf64 :data]
+end
+
+to wfl1 :addr :l
+clearcom
+sendl (se $fd byte0 :addr byte1 :addr count :l :l)
+send $ff ignore recc
+end
+
+to rb :addr
+output first rl :addr 1
+end
+
+to rl :addr :count
+clearcom
+let [res []]
+sendl (se $fe byte0 :addr byte1 :addr :count)
+dotimes [i :count][make "res se :res recc]
+output :res
+end
+
+to reset
+send $f9 wait .5
+end
+
+to first64 :l
+if (count :l) < 64 [output :l]
+let [res []]
+dotimes [i 64][make "res se :res nth :i :l]
+output :res
+end
+
+to bf64 :l
+if (count :l) < 64 [output []]
+repeat 64 [make "l bf :l]
+output :l
+end
+
+
+;---------------
+;
+; low level comms
+;
+
+to send :n
+.send :n
+end
+
+to recc
+output trecc 100
+end
+
+to trecc :n
+let [c 0 starttime timer]
+loop 
+ [make "c .recc
+  if :c > -1 [output :c]
+  if (timer - :starttime) > :n [output -1]]
+end
+
+to start-comms
+let [os getproperty "os.name]
+if windows? [open-windows-port stop]
+if member? "Linux :os [open-linux-port stop]
+open-mac-port
+end
+
+to open-named-port :name
+openport :name
+setportparams 19200 8 1 0
+end
+
+to open-windows-port
+usbinit
+let [names portnames $0403 $6001]
+dolist [i :names]
+ [carefully [openport :i][]
+  if not porthandle = 0 [make "portname :i setportparams 19200 8 1 0 stop]]
+print "|dongle not found| stop
+end
+
+to open-mac-port
+make "port find-mac-port
+if empty? :port [stop]
+openport :port
+ignore exec (word "|stty -f | :port "| 19200|)
+end
+
+to find-mac-port
+dolist [i files "/dev][if member? "cu.usbserial :i [output :i]]
+output "
+end
+
+to open-linux-port
+make "port find-linux-port
+if empty? :port [stop]
+openport :port
+print exec "|python reset.py|
+;ignore exec (word "|stty raw -echo -F | :port "| raw -echo 19200|)
+end
+
+to find-linux-port
+dolist [i files "/dev][if member? "ttyUSB0 :i [output :i]]
+output "
+end
+
+to reset
+dtrrts 0 0 wait .2
+dtrrts 1 0 wait .2
+end
+
+to runvm
+dtrrts 0 1 wait .2
+dtrrts 1 1 wait .2
+end
+
+to dtrrts :dtr :rts
+ifelse windows? [modemctrl :dtr :rts][ioctrl :dtr :rts]
+end
+
+to ioctrl :dtr :rts
+ignore exec (word "|./ioctl | :port "| | :dtr "| | :rts "| 0|)
+end
+
+
+define recv[][output .recc]

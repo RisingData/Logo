@@ -1,0 +1,116 @@
+;****************************************************************
+; Included in this file are the jLogo words to run the tests
+; after a App Board is bootloaded and has the VM loaded to test
+; the functionality.
+;
+; Written by Hunter Mills on 3/30/15
+;****************************************************************
+
+
+; Load Code into Both Boards (init-NewBoard and init-TestBoard)
+;****************************************************************
+
+; Selects new board and loads code to the target
+to init-NewBoard
+
+   talkto 16                              ; talk to new board
+   make "srcfile "Newboard/NewBoard.prj   ; select source code
+   compile                                ; compile on computer
+   download                               ; download to target
+
+end
+
+; Selects test board and loads code to the target
+to init-TestBoard
+
+   talkto 15                              ; talk to test boarf
+   make "srcfile "TestBoard/TestBoard.prj ; select source code
+   compile                                ; compile on computer
+   download                               ; download to target
+
+end
+
+;****************************************************************
+
+
+; Select boards for communication (talkto-new and talkto-test)
+;****************************************************************
+
+; Word to select the new board
+to talkto-new
+
+   talkto 16                              ; talk to new board
+   make "srcfile "NewBoard/NewBoard.prj   ; select source code
+   compile                                ; compile on computer
+
+end
+
+; Word to select the controller board
+to talkto-test
+
+   talkto 15                              ; talk to test board
+   make "srcfile "TestBoard/TestBoard.prj ; select source code
+   compile                                ; compile on computer
+
+end
+
+;****************************************************************
+
+
+; Word to run functionality test (Test-Board)
+;****************************************************************
+
+to Test-Board
+
+   ; **** All on test ****
+   print "||
+   print "|All On Test Begin (Every Pin Should read 1)|
+
+   talkto-new                          ; Select new
+   ul-run [
+      dp-all-init                      ; Set all pins as digital
+      dp-all-on                        ; turn all pins on
+   ]
+
+   talkto-test                         ; Select test
+   ul-run [
+      dp-all-init                      ; Set all pins as digital
+      dp-all-read                      ; read all pins
+   ]
+
+   ; **** All off test ****
+   print "|All Off Test Begin (Every Pin Should read 0)|
+
+   talkto-new                          ; Select new
+   ul-run [ dp-all-off ]               ; turn all pins off
+   talkto-test                         ; Select test
+   ul-run [ dp-all-read ]              ; read all pins
+
+   ; **** LED test ***
+   print "|Light Test Begin|
+
+   talkto-new                             ; Selet new
+   ul-run [ onpowerup ]                   ; init LED
+   print "|Red Light On|
+   ul-run [ redon mwait 2000 redoff ]     ; Red
+   print "|Green Light On|
+   ul-run [ greenon mwait 2000 greenoff ] ; Green
+   print "|Blue Light On|
+   ul-run [ blueon mwait 2000 blueoff ]   ; Blue
+
+   print "||
+   print "|DAC Test Begin|
+
+   ul-run [ init-dac ]
+
+   print "|   Testing DAC0|
+   print "|   (Oscilliscope should show sine wave with Vp-p ~ 3.3V on Channel 1)|
+   ul-run [ repeat 5 [dac0-sine-cycle 10] ]
+   print "|   Testing DAC1|
+   print "|   (Oscilliscope should show sine wave with Vp-p ~ 3.3V on Channel 2)|
+   ul-run [ repeat 5 [dac1-sine-cycle 10] ]
+
+   print "||
+   print "|Finished|
+
+end

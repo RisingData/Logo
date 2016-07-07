@@ -1,0 +1,4 @@
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{bmAttributes}=="a0", ATTRS{idProduct}=="6001", MODE:="0666", SYMLINK+="ulogo"
+
+
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{bmAttributes}=="80", ATTRS{idProduct}=="6001", MODE:="0666", SYMLINK+="osc"

@@ -1,0 +1,215 @@
+constants[
+
+[p1dir $22][p1out $21][p1in $20][p1sel $26]
+[p2dir $2a][p2out $29][p2in $28][p2sel $2e]
+[p3dir $1a][p3out $19][p3in $18][p3sel $1b]
+[p4dir $1E][p4out $1D][p4in $1C][p4sel $1F]
+[p5dir $32][p5out $31][p5in $30][p5sel $33]
+[p6dir $36][p6out $35][p6in $34][p6sel $37]
+
+[channel0 $01][channel1 $02][channel2 $04][channel3 $08]
+[channel4 $10][channel5 $20][channel6 $40][channel7 $80]
+
+
+]
+
+to dp-all-init                ; init all pins as digital input
+
+   bclr p1sel channel3
+   bclr p1sel channel4
+   bclr p1sel channel5
+   bclr p1sel channel6
+   bclr p1sel channel7
+
+   bclr p2sel channel0
+
+   bclr p3sel channel0
+   bclr p3sel channel1
+   bclr p3sel channel2
+   bclr p3sel channel3
+   bclr p3sel channel6
+   bclr p3sel channel7
+
+   bclr p4sel channel0
+   bclr p4sel channel1
+   bclr p4sel channel2
+   bclr p4sel channel3
+   bclr p4sel channel4
+   bclr p4sel channel5
+   bclr p4sel channel6
+   bclr p4sel channel7
+
+   bclr p5sel channel0
+   bclr p5sel channel1
+   bclr p5sel channel2
+   bclr p5sel channel3
+   bclr p5sel channel4
+   bclr p5sel channel5
+   bclr p5sel channel6
+   bclr p5sel channel7
+
+   bclr p6sel channel0
+   bclr p6sel channel1
+   bclr p6sel channel2
+   bclr p6sel channel3
+   bclr p6sel channel4
+   bclr p6sel channel5
+   bclr p6sel channel6
+   bclr p6sel channel7
+
+   bclr p1dir channel3
+   bclr p1dir channel4
+   bclr p1dir channel5
+   bclr p1dir channel6
+   bclr p1dir channel7
+
+   bclr p2dir channel0
+
+   bclr p3dir channel0
+   bclr p3dir channel1
+   bclr p3dir channel2
+   bclr p3dir channel3
+   bclr p3dir channel6
+   bclr p3dir channel7
+
+   bclr p4dir channel0
+   bclr p4dir channel1
+   bclr p4dir channel2
+   bclr p4dir channel3
+   bclr p4dir channel4
+   bclr p4dir channel5
+   bclr p4dir channel6
+   bclr p4dir channel7
+
+   bclr p5dir channel0
+   bclr p5dir channel1
+   bclr p5dir channel2
+   bclr p5dir channel3
+   bclr p5dir channel4
+   bclr p5dir channel5
+   bclr p5dir channel6
+   bclr p5dir channel7
+
+   bclr p6dir channel0
+   bclr p6dir channel1
+   bclr p6dir channel2
+   bclr p6dir channel3
+   bclr p6dir channel4
+   bclr p6dir channel5
+   bclr p6dir channel6
+   bclr p6dir channel7
+
+end
+
+to dp-all-read                ; read all pins and display outputs
+
+   prf "|P1.3: %d\n| btst p1in channel3 
+   mwait 300
+
+   prf "|P1.4: %d\n| btst p1in channel4 
+   mwait 300
+
+   prf "|P1.5: %d\n| btst p1in channel5 
+   mwait 300
+
+   prf "|P1.6: %d\n| btst p1in channel6 
+   mwait 300
+
+   prf "|P1.7: %d\n| btst p1in channel7 
+   mwait 300
+
+   prf "|P2.0: %d\n| btst p2in channel0 
+   mwait 300
+
+   prf "|P3.0: %d\n| btst p3in channel0 
+   mwait 300
+
+   prf "|P3.1: %d\n| btst p3in channel1 
+   mwait 300
+
+   prf "|P3.2: %d\n| btst p3in channel2 
+   mwait 300
+
+   prf "|P3.3: %d\n| btst p3in channel3 
+   mwait 300
+
+   prf "|P3.6: %d\n| btst p3in channel6 
+   mwait 300
+
+   prf "|P3.7: %d\n| btst p3in channel7 
+   mwait 300
+
+   prf "|P4.0: %d\n| btst p4in channel0 
+   mwait 300
+
+   prf "|P4.1: %d\n| btst p4in channel1 
+   mwait 300
+
+   prf "|P4.2: %d\n| btst p4in channel2 
+   mwait 300
+
+   prf "|P4.3: %d\n| btst p4in channel3 
+   mwait 300
+
+   prf "|P4.4: %d\n| btst p4in channel4 
+   mwait 300
+
+   prf "|P4.5: %d\n| btst p4in channel5 
+   mwait 300
+
+   prf "|P4.6: %d\n| btst p4in channel6 
+   mwait 300
+
+   prf "|P4.7: %d\n| btst p4in channel7 
+   mwait 300
+
+   prf "|P5.0: %d\n| btst p5in channel0 
+   mwait 300
+
+   prf "|P5.1: %d\n| btst p5in channel1 
+   mwait 300
+
+   prf "|P5.2: %d\n| btst p5in channel2 
+   mwait 300
+
+   prf "|P5.3: %d\n| btst p5in channel3 
+   mwait 300
+
+   prf "|P5.4: %d\n| btst p5in channel4 
+   mwait 300
+
+   prf "|P5.5: %d\n| btst p5in channel5 
+   mwait 300
+
+   prf "|P5.6: %d\n| btst p5in channel6 
+   mwait 300
+
+   prf "|P5.7: %d\n| btst p5in channel7 
+   mwait 300
+
+   prf "|P6.0: %d\n| btst p6in channel0 
+   mwait 300
+
+   prf "|P6.1: %d\n| btst p6in channel1 
+   mwait 300
+
+   prf "|P6.2: %d\n| btst p6in channel2 
+   mwait 300
+
+   prf "|P6.3: %d\n| btst p6in channel3 
+   mwait 300
+
+   prf "|P6.4: %d\n| btst p6in channel4 
+   mwait 300
+
+   prf "|P6.5: %d\n| btst p6in channel5 
+   mwait 300
+
+   prf "|P6.6: %d\n| btst p6in channel6 
+   mwait 300
+
+   prf "|P6.7: %d\n\n| btst p6in channel7
+   mwait 1000
+
+end
+

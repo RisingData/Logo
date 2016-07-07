@@ -1,0 +1,652 @@
+;;;;;;;;;;;;;;;;;;;;;
+;
+; msp430 assembler
+;
+
+to asm
+assemble file-field
+end
+
+to assemble :file
+dolist [i :symbols][clearname word "# thing :i clearname :i]
+make "symbols []
+let [code parse filetostring :file
+     result []]
+dolist [i :code][pass0-token :i]
+let [pc 0]
+dolist [i :result][pass1-token :i]
+let [pc 0]
+dolist [i :result][pass2-token :i]
+print se :end - :start "bytes
+end
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; pass0 
+; fill in the opcode information
+; address info will be filled in in following passes
+;
+
+to pass0-token :token
+if word? :token [pass0-add se "label :token stop]
+let [format getp first :token "format]
+ifelse empty? :format
+  [carefully (se first :token) [error [pass0 error]]]
+  [carefully (se :format) [error [pass0 error:]]]
+end
+
+to format1
+if not (count :token) = 3 [error [wrong # of args] stop]
+let [inst first :token
+     rawop getp :inst "opcode
+     src decode-source item 2 :token
+     srcmode mode-bits item 1 :src
+     srcreg item 2 :src
+     dst decode-dest item 3 :token
+     dstmode mode-bits item 1 :dst
+     dstreg item 2 :dst
+     op (sum :rawop 
+             lsh :srcmode 4 
+             lsh :srcreg 8 
+             lsh :dstmode 7
+             :dstreg)]
+pass0-add se "word :op
+if (count :src) = 3 [pass0-add lput item 3 :src [word]]
+if (count :dst) = 3 [pass0-add lput item 3 :dst [word]]
+end
+
+to format2
+if not (count :token) = 2 [error [wrong # of args] stop]
+let [inst first :token
+     rawop getp :inst "opcode
+     src decode-source item 2 :token
+     srcmode mode-bits item 1 :src
+     srcreg item 2 :src
+     op (sum :rawop 
+             lsh :srcmode 4 
+             :srcreg]
+pass0-add se "word :op
+if (count :src) = 3 [pass0-add lput item 3 :src [word]]
+end
+
+to format3
+if not (count :token) = 2 [error [wrong # of args] stop]
+let [op getp item 1 :token "opcode
+     targ item 2 :token]
+pass0-add (list "jumpto :op :targ)
+end
+
+to emulated
+if :token = [ret] [pass0-token [mov @sp+ pc] stop]
+if :token = [reti] [pass0-token [dcw [$1300]] stop]
+if (first :token) = "pop [pass0-token fput "mov fput "@sp+ bf :token stop]
+if (first :token) = "br [pass0-token fput "mov lput "pc bf :token stop]
+error [bad emulated instruction]
+end
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; argument decode
+;
+
+to mode-bits :mode
+selectq :mode
+  [reg [output 0] index [output 1] indirect [output 2] autoinc [output 3]]
+end
+
+
+to decode-source :token
+if empty? :token [error "|bad token| output [reg 0]]
+if word? :token
+  [if (getp :token "regmode) = "indirect [output se "indirect getp :token "regnum]
+   if (getp :token "regmode) = "autoinc [output se "autoinc getp :token "regnum]
+   if (first :token) = "# [output decode-immediate first parse bf :token)]
+   output decode-dest :token]
+if (first :token) = "# 
+   [output (list "autoinc 0 bf :token)]
+output decode-dest :token
+end
+
+to decode-immediate :n
+if name? :n [make "n thing :n]
+if not number? :n [output (list "autoinc 0 :n)]
+if :n = 0 [output [reg 3]]
+if :n = 1 [output [index 3]]
+if :n = 2 [output [indirect 3]]
+if and (logand :n $ffff) = $ffff (logand $0040 :rawop) = 0 [output [autoinc 3]]
+if and (logand :n $ffff) = $ff (logand $0040 :rawop) > 0 [output [autoinc 3]]
+if :inst = "push [output (list "autoinc 0 :n)] ;workaround for a cpu bug!!
+if :n = 4 [output [indirect 2]]
+if :n = 8 [output [autoinc 2]]
+output (list "autoinc 0 :n)
+end
+
+to decode-dest :token
+if empty? :token [error "|bad token| output [reg 0]]
+if list? :token
+  [if and (getp first :token "regmode) = "indirect
+          (count :token) = 2
+     [output (list "index 
+                   getp first :token "regnum
+                   item 2 :token)]
+   output (list "index 2 :token)]
+if (getp :token "regmode) = "reg [output se "reg getp :token "regnum]
+output (list "index 2 :token)
+end
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; psedo-ops
+;
+
+to dcw
+dolist [i bf :token][pass0-add list "word :i]]
+end
+
+to org
+pass0-add :token
+end
+
+to const
+let [name item 2 :token 
+     val item 3 :token]
+define-symbol :name arg-eval :val
+end
+
+to namereg
+let [regno item 2 :token 
+     name item 3 :token]
+make-reg :name :regno
+end
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; pass1
+; get the values of labels
+;
+
+to pass1-token :token
+selectq item 1 :token
+  [word [make "pc :pc + 2]
+   jumpto [make "pc :pc + 2]
+   org  [make "pc arg-eval item 2 :token]
+   label [define-symbol item 2 :token :pc]]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; pass2
+; write the results into th memory array
+;
+
+to pass2-token :token
+selectq item 1 :token
+  [word [write-word :pc arg-eval item 2 :token
+         make "pc :pc + 2]
+   jumpto [write-word :pc (item 2 :token) +  offset-to arg-eval item 3 :token
+           make "pc :pc + 2]
+   org  [make "pc arg-eval item 2 :token]]
+end
+
+to offset-to :place
+let [offset lsh :place - :pc - 2 -1]
+if or :offset > 511 :offset < -512 [error [offset overslow] output 0]
+output logand $3ff :offset
+end
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; disassembler
+;
+
+to dis :pc :end
+loop [if not :pc < :end [stop] 
+      print dis-one]
+end
+
+to lookat :pc
+repeat 10 [print dis-one]
+end
+
+to dis-one
+let [startpc :pc
+     op dis-fetch
+     ins (word "|[| dis-inst :op "|]|)
+     word2 "|    |
+     word3 "|    |
+     sym "|        |]
+if name? word "# :startpc [make "sym trim thing word "# :startpc]
+if :pc > :startpc + 2 [make "word2 hw read-word :startpc + 2]
+if :pc > :startpc + 4 [make "word3 hw read-word :startpc + 4]
+output (se hw :startpc hw :op  :word2 :word3 :sym :ins)
+end
+
+to dis-inst :inst
+selectq lsh :inst -12
+ [0 [output "???] 
+  1 [output dis-format2]
+  2 [output dis-format3] 3 [output dis-format3]
+  4 [output dis-format1 "mov]
+  5 [output dis-format1 "add]
+  6 [output dis-format1 "addc]
+  7 [output dis-format1 "subc]
+  8 [output dis-format1 "sub]
+  9 [output dis-format1 "cmp]
+  10 [output dis-format1 "dadd]
+  11 [output dis-format1 "bit]
+  12 [output dis-format1 "bic]
+  13 [output dis-format1 "bis]
+  14 [output dis-format1 "xor]
+  15 [output dis-format1 "and]]
+end
+h
+to dis-format1 :name
+if (logand 1 lsh :op -6) = 1 [make "name word :name ".b]
+output 
+  (list :name 
+     dis-src logand 3 lsh :op -4
+             logand $f lsh :op -8
+     dis-dest logand 1 lsh :op -7
+             logand $f :op)
+end
+
+to dis-format2
+if :op > $13ff [output "??]
+if :op = $1300 [output [reti]]
+let [name nth logand $f lsh :op -6
+       [rrc rrc.b swbp ?? rra rra.b sxt ?? 
+        push push.b call ?? ?? ?? ?? ??]]
+output list :name dis-src logand 3 lsh :op -4 logand $f :op
+end
+
+to dis-format3
+let [name nth logand 7 lsh :op -10
+       [jne jeq jnc jc jn jge jl jmp]
+     offset logand $3ff :op]
+if :offset > $1ff [make "offset :offset - $400]
+output list :name dis-word :pc + 2 * :offset
+end
+
+to dis-src :mode :reg
+if member? :reg [2 3] [output dis-cg-src :mode :reg]
+let [regname nth :reg :regs]
+if :mode = 0 [output :regname]
+if and :reg = 0 :mode = 3 [output word "# dis-word dis-fetch]
+if :mode = 1 [output se word "@ :regname dis-word dis-fetch]
+if :mode = 2 [output word "@ :regname]
+if :mode = 3 [output (word "@ :regname "+)]
+end
+
+to dis-cg-src :mode :reg
+ifelse :reg = 2
+  [selectq :mode 
+     [0 [output "sr] 1 [output dis-word dis-fetch]
+      2 [output "#4] 3 [output "#8]]]
+  [selectq :mode 
+     [0 [output "#0] 1 [output "#1]
+      2 [output "#2] 
+      3 [ifelse (logand :inst $0040) = 0 [output "#$ffff][output "#$ff]]]
+end
+  
+to dis-dest :mode :reg
+if :mode = 0 [output nth :reg :regs]
+if :reg = 2 [output dis-word dis-fetch]
+output (list word "@ nth :reg :regs dis-word dis-fetch)
+end
+
+to dis-word :n
+if :n < 10 [output :n]
+if :n < 256 [output word "$ hw :n]
+if not name? word "# :n [output word "$ hw :n]
+output thing word "# :n
+end
+
+to dis-fetch
+let [result read-word :pc]
+make "pc :pc + 2
+output :result
+end
+
+to trim :x
+if (count :x) > 7 [output :x]
+repeat 8 - count :x [make "x word :x "| |]
+output :x
+end
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; instruction and register definition
+;
+
+to make-instructions
+dolist [i [[mov $4000][add $5000][addc $6000][subc $7000]
+           [sub $8000][cmp $9000][dadd $a000][bit $b000]
+           [bic $c000][bis $d000][xor $e000][and $f000]]]
+  [put first :i "opcode item 2 :i
+   put first :i "format "format1
+   put .word first :i ".b "opcode sum $40 item 2 :i
+   put .word first :i ".b "format "format1]
+dolist [i [[rrc $1000][rrc.b $1040][swpb $1080]
+           [rra $1100][rra.b $1140][sxt $1180]
+           [push $1200][push.b $1240][call $1280]]]
+  [put first :i "opcode item 2 :i
+   put first :i "format "format2]
+dolist [i [[jne $2000][jeq $2400][jnc $2800][jc $2c00]
+           [jn $3000][jge $3400][jl $3800][jmp $3c00]]]
+  [put first :i "opcode item 2 :i
+   put first :i "format "format3]
+put "ret "format "emulated
+put "pop "format "emulated
+put "br "format "emulated
+put "reti "format "emulated
+end
+
+to make-regs
+make "regs makelist 16
+dotimes [i 16][make-reg .word "r :i :i]
+make-reg "pc 0
+make-reg "sp 1
+make-reg "sr 2
+end
+
+to make-reg :name :num
+let [indname .word "@ :name
+     autoincname .word :indname "+]
+put :name "regnum :num
+put :name "regmode "reg
+put :indname "regnum :num
+put :indname "regmode "indirect
+put :autoincname "regnum :num
+put :autoincname "regmode "autoinc
+setnth :num :regs :name
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; assembler utilities
+;
+
+to define-symbol :name :val
+if name? :name [print se "redefining :name stop]
+make :name :val
+make word "# :val :name
+make "symbols se :symbols :name
+end
+
+to arg-eval :thing
+if number? :thing [output :thing]
+if word? :thing 
+ [ifelse name? :thing 
+   [output thing :thing]
+   [error [can't evaluate] output 0]]
+output run :thing
+end
+
+to pass0-add :thing
+make "result lput :thing :result
+end
+
+to error :msg
+print se :msg :token
+end
+
+to write-word :addr :val
+setnth :addr :memory logand $ff :val
+setnth :addr + 1 :memory logand $ff lsh :val -8
+end
+
+to read-word :addr
+output (nth :addr :memory) + lsh (nth :addr + 1 :memory) 8
+end
+
+to read-byte :addr
+output nth :addr :memory
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;
+; communications using the bsl
+;
+; $ffde has to be set to $0000 to avoid
+; mass erase on wronng passwd
+;
+; enter-bsl
+; passwd v-erase
+; print rl $10c0 64
+; wl $ffde se [0 0] v-timints
+
+to new-chip
+print [enter-bsl]
+print [passwd v-erase]
+print [print rl $10c0 64]
+print [wl $ffde se [0 0] v-timints]
+end
+
+to download
+enter-bsl
+passwd v-timints
+erase
+wl $ffde se [0 0] v-timints
+let [len :end - :start
+     code get-memory :start :len]
+wl :start :code
+end
+
+to get-memory :addr :len
+let [m []]
+dotimes [i :len][make "m se :m read-byte :addr + :i]
+output :m
+end
+
+to passwd :vectors
+clearcom
+send $80 ignore recc wait .5
+let [l se [$80 $10 $24 $24 0 0 0 0] :vectors]
+sendl se :l cksum :l
+print se "passwd hb trecc 700
+end
+
+
+to erase
+clearcom
+send $80 ignore recc wait .5
+let [l [$80 $16 $04 $04 $00 $f8 $04 $a5]]
+sendl  se :l cksum :l
+print se "erase hb trecc 700
+end
+
+to erase-seg :addr
+clearcom
+send $80 ignore recc wait .5
+let [l (se $80 $16 $04 $04 byte0 :addr byte1 :addr $02 $a5)]
+sendl  se :l cksum :l
+print se "erase-seg hb trecc 700
+end
+
+to rl :addr :len
+clearcom
+send $80 ignore recc wait .5
+let [l (se $80 $14 $04 $04 byte0 :addr byte1 :addr byte0 :len 0)]
+sendl se :l cksum :l
+let [res []]
+repeat :len + 6 [make "res se :res recc]
+output bf bf bf bf bl bl :res
+end
+
+to wl :addr :data
+loop
+ [if empty? :data [stop]
+  wl1 :addr first64 :data
+  make "addr :addr + 64
+  make "data bf64 :data]
+end
+
+to wl1 :addr :data
+clearcom
+send $80 ignore recc wait .5
+let [len count :data
+     plen :len + 4
+     l (se $80 $12 :plen :plen  byte0 :addr byte1 :addr :len 0 :data)]
+sendl se :l cksum :l
+print (se "wl hw :addr hb trecc 700)
+end
+
+to first64 :l
+if (count :l) < 64 [output :l]
+let [res []]
+dotimes [i 64][make "res se :res nth :i :l]
+output :res
+end
+
+to bf64 :l
+if (count :l) < 64 [output []]
+repeat 64 [make "l bf :l]
+output :l
+end
+
+to enter-bsl
+  print exec "|python ./enter_bsl.py|
+;dtrrts 0 1 wait .2
+;dtrrts 0 0 wait .2
+;dtrrts 0 1 wait .2
+;dtrrts 0 0 wait .2
+;dtrrts 1 0 wait .2
+;dtrrts 1 1 wait .2
+end
+
+to reset
+dtrrts 0 0 wait .2
+dtrrts 1 0 wait .2
+end
+
+to cksum :x
+let [l 0 h 0]
+dotimes [i count :x][ifelse (remainder :i 2) = 0 [make "l logxor :l nth :i :x][make "h logxor :h nth :i :x]]
+output se logxor $ff logand $ff :l logxor $ff logand $ff :h
+end
+
+to v-erase
+output
+ [$ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff 
+  $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff]
+end
+
+to v-timints
+output
+ [$ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff 
+  $02 $21 $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $ff $00 $fe]
+end
+
+;---------------
+;
+; low level comms
+;
+
+to send :n
+.send :n
+end
+
+to recc
+output trecc 100
+end
+
+to trecc :n
+let [c 0 starttime timer]
+loop 
+ [make "c .recc
+  if :c > -1 [output :c]
+  if (timer - :starttime) > :n [output -1]]
+end
+
+to open-serial-port
+if windows? [open-windows-port stop]
+; if member? "Linux :os [open-linux-port stop]
+; open-mac-port
+print "|Opening Linux port|
+open-linux-port
+end
+
+to open-linux-port
+make "port find-linux-port
+if empty? :port [stop]
+openport :port
+print (word "|Setting Linux port | :port)
+print exec (word "|stty -F | :port "| 9600 raw -echo cs8 parenb -parodd|)
+end
+
+to find-linux-port
+dolist [i files "/dev][if member? "ttyUSB :i [output :i]]
+output "
+end
+
+to dtrrts :dtr :rts
+ifelse windows? [modemctrl :dtr :rts][ioctrl :dtr :rts]
+end
+
+to open-windows-port
+let [name portname $0403 $6001]
+if empty? :name [print "|dongle not found| stop]
+openport :name
+setportparams 9600 8 1 1
+end
+
+to open-mac-port
+make "port find-mac-port
+if empty? :port [stop]
+openport :port
+ignore exec (word "|stty -f | :port "| 9600 parenb -parodd|)
+end
+
+to ioctrl :dtr :rts
+ignore exec (word "|./ioctl | :port "| | :dtr "| | :rts)
+end
+
+to find-mac-port
+dolist [i files "/dev][if member? "cu.usbserial :i [output :i]]
+output "
+end
+
+
+;---------------
+;
+; etc
+;
+
+
+to browse
+let[fileinfo askl "dialog [get-common-dialog [get-common-readfile "text]]]
+if empty? :fileinfo [stop]
+setfile-field nth 1 :fileinfo
+end
+
+to print-hexl :list
+let [result []]
+dolist [i :list]
+  [if number? :i [make "i word "$ hw :i]
+   make "result lput :i :result]
+print :result
+end
+
+define byte0 [n][output logand :n $ff]
+define byte1 [n][output logand lsh :n -8 $ff]
+define hb [n][output hexw logand $ff :n 2]
+define hw [n][output hexw logand $ffff :n 4]
+define ignore [n][]
+define .word [a b][output intern word :a :b]
+end
+
+
+to startup
+if porthandle = 0 [open-serial-port]
+if name? "symbols [stop]
+make "symbols []
+make "memory makelist 65536
+dotimes [i 65536][setnth :i :memory $ff]
+make-instructions
+make-regs
+setfile-field "bootloader.txt
+end

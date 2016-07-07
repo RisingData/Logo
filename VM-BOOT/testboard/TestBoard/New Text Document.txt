@@ -1,0 +1,94 @@
+to dp-all-init
+
+   bclr p1sel channel3
+   bclr p1sel channel4
+   bclr p1sel channel5
+   bclr p1sel channel6
+   bclr p1sel channel7
+
+   bclr p2sel channel0
+
+   bclr p3sel channel0
+   bclr p3sel channel1
+   bclr p3sel channel2
+   bclr p3sel channel3
+   bclr p3sel channel6
+   bclr p3sel channel7
+
+   bclr p4sel channel0
+   bclr p4sel channel1
+   bclr p4sel channel2
+   bclr p4sel channel3
+   bclr p4sel channel4
+   bclr p4sel channel5
+   bclr p4sel channel6
+   bclr p4sel channel7
+
+   bclr p5sel channel0
+   bclr p5sel channel1
+   bclr p5sel channel2
+   bclr p5sel channel3
+   bclr p5sel channel4
+   bclr p5sel channel5
+   bclr p5sel channel6
+   bclr p5sel channel7
+
+   bclr p6sel channel0
+   bclr p6sel channel1
+   bclr p6sel channel2
+   bclr p6sel channel3
+   bclr p6sel channel4
+   bclr p6sel channel5
+   bclr p6sel channel6
+   bclr p6sel channel7
+
+   bset p1dir channel3
+   bset p1dir channel4
+   bset p1dir channel5
+   bset p1dir channel6
+   bset p1dir channel7
+
+   bset p2dir channel0
+
+   bset p3dir channel0
+   bset p3dir channel1
+   bset p3dir channel2
+   bset p3dir channel3
+   bset p3dir channel6
+   bset p3dir channel7
+
+   bset p4dir channel0
+   bset p4dir channel1
+   bset p4dir channel2
+   bset p4dir channel3
+   bset p4dir channel4
+   bset p4dir channel5
+   bset p4dir channel6
+   bset p4dir channel7
+
+   bset p5dir channel0
+   bset p5dir channel1
+   bset p5dir channel2
+   bset p5dir channel3
+   bset p5dir channel4
+   bset p5dir channel5
+   bset p5dir channel6
+   bset p5dir channel7
+
+   bset p6dir channel0
+   bset p6dir channel1
+   bset p6dir channel2
+   bset p6dir channel3
+   bset p6dir channel4
+   bset p6dir channel5
+   bset p6dir channel6
+   bset p6dir channel7
+
+end
+
+to all-read
+
+
+end
+
+

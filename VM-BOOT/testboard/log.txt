@@ -1,0 +1,8 @@
+Welcome to Logo!
+  Can't open file startup.logo
+Welcome to Logo!
+  Can't open file logo/assembler.logo in startup
+Welcome to Logo!
+  Can't open file logo/assembler.logo in startup
+Welcome to Logo!
+  Can't open file logo/assembler.logo in startup

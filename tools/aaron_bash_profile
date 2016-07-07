@@ -1,0 +1,45 @@
+# MacPorts
+export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+# Finished adapting your PATH environment variable for use with MacPorts.
+
+
+# Anaconda 1.9.2
+export PATH="//anaconda/bin:$PATH"
+
+# Star-Hikianalia
+export PATH=/star-hikianalia/bin/extractor/:$PATH
+
+# Setting PATH for Python 2.7
+# The orginal version is saved in .bash_profile.pysave
+# PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
+# export PATH
+
+# Ureka
+ur_setup() {
+    eval `/Users/aowen/.ureka/ur_setup -sh $*`
+}
+ur_forget() {
+    eval `/Users/aowen/.ureka/ur_forget -sh $*`
+}
+
+
+# IDL
+export IDL_DIR=/Applications/exelis/idl
+export LM_LICENSE_FILE=${IDL_DIR}/license/license.dat
+export IDL_PATH=+$IDL_DIR/lib
+export IDL_PATH=$IDL_PATH:+'~/IDLWorkspace83/'
+export IDL_DEVICE=X
+alias idl='${IDL_DIR}/bin/idl'
+
+
+
+# Alias’                                                                                                                                               
+alias rm='rm -i'
+alias ls='ls -GF'
+
+
+
+# iraf setup commands
+#if [ -e /Users/aowen/.iraf/setup.sh ]; then
+#   source /Users/aowen/.iraf/setup.sh
+#fi

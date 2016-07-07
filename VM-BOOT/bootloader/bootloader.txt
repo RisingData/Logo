@@ -1,0 +1,127 @@
+        [const stack $20fe]
+	[const app-init $2100]
+	[const app-addr $2104]		; $c002 is the interrupt address
+
+	[const wdctl $0120]
+	[const dcoctl $0056][const cal_dco_12mhz $10fa]
+	[const bcsctl1 $0057][const cal_bc1_12mhz $10fb]
+
+	[const p1in $20][const p1out $21][const p1dir $22]
+	[const p3sel $1b]
+
+	[const u0tx $67][const u0rx $66]
+	[const u0ctl1 $61][const u0br0 $62][const u0br1 $63]
+	[const ifg2 3][const u0txfg 2][const u0rxfg 1]
+	
+	[const fctl1 $0128][const fctl2 $012a][const fctl3 $012c]
+	
+	[org $fe00]
+	
+start	[jmp init]
+	[jmp putc]
+
+init	[mov #$5a80 wdctl]	; turn off the wdt
+        [mov #stack sp]
+
+	[mov.b cal_bc1_12mhz bcsctl1]
+	[mov.b cal_dco_12mhz dcoctl]
+	[bis.b #$30 p3sel]
+	[mov.b #$81 u0ctl1]
+	[mov.b #113 u0br0][mov.b #2 u0br1]
+	[bic.b #1 u0ctl1]
+
+	[mov #$a59d fctl2]	; flash clock  = smclk/30
+
+	[bit.b #1 p1in][jeq loop]
+	[call #app-init]	
+	
+loop	[call #getc]
+	[cmp.b #$ff r15][jeq i'm-here]
+	[cmp.b #$fe r15][jeq read-memory]
+	[cmp.b #$fd r15][jeq write-flash]
+	[cmp.b #$fc r15][jeq erase-flash]
+	[cmp.b #$fb r15][jeq write-memory]
+	[cmp.b #$fa r15][jeq run-app]
+	[cmp.b #$f9 r15][jeq reset]
+	[jmp loop]
+
+i'm-here
+	[mov.b #36 r15][call #putc]
+	[jmp loop]
+
+reset	[br #0]		; fetching from the io page triggers a reset
+
+read-memory
+	[call #getc16]
+	[call #getc][mov.b r15 r13]
+rm20	[mov.b @r14 r15][call #putc]
+	[add #1 r14]
+	[sub.b #1 r13][jne rm20]
+	[jmp loop]
+
+write-flash
+	[call #getc16]
+	[call #getc][mov.b r15 r13]
+wf20	[call #getc]
+	[mov r14 r12][bic #$1ff r12]
+	[cmp #$fe00 r12][jeq wf40]
+	[call #flash-byte]
+wf40	[add #1 r14]
+	[sub.b #1 r13][jne wf20]
+	[jmp loop]
+
+erase-flash
+	[call #getc16]
+	[mov r14 r15][bic #$1ff r15]
+	[cmp #$fe00 r15][jeq erf90]
+	[call #flash-erase-seg]
+	[mov.b #$cf r15][call #putc]
+	[jmp loop]
+erf90	[mov.b #$cc r15][call #putc]
+	[jmp loop]
+
+flash-byte
+	[mov #$a540 fctl3]	; unlock
+	[mov #$a540 fctl1]	; write mode on
+	[mov.b r15 [@r14 0]]
+	[mov #$a500 fctl1]	; write mode off
+	[mov #$a550 fctl3]	; lock
+	[ret]
+	
+flash-erase-seg
+	[mov #$a540 fctl3]	; unlock
+	[mov #$a502 fctl1]	; erase seg on
+	[mov.b r15 [@r14 0]]
+	[mov #$a500 fctl1]	; write mode off
+	[mov #$a550 fctl3]	; lock
+	[ret]
+
+write-memory
+	[call #getc16]
+	[call #getc][mov.b r15 r13]
+wm20	[call #getc]
+	[mov.b r15 [@r14 0]]
+	[add #1 r14]
+	[sub.b #1 r13][jne wm20]
+	[jmp loop]
+
+run-app	[call #app-addr]
+	[mov.b #$af r15][call #putc]
+	[jmp loop]
+	
+putc	[bit.b #u0txfg ifg2]
+	[jeq putc]
+	[mov.b r15 u0tx]
+	[ret]
+
+getc16	[call #getc][mov.b r15 r14]
+	[call #getc][swpb r15]
+	[add r15 r14]
+	[ret]
+
+getc	[bit.b #u0rxfg ifg2]
+	[jeq getc]
+	[mov.b u0rx r15]
+	[ret]
+end
+

@@ -1,0 +1,6 @@
+to startup
+  load "|/usr/local/i3/logo/project|
+  startup
+  project "BasicBoard
+  run-forever
+end

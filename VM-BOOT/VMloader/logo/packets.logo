@@ -1,0 +1,58 @@
+to packet-start
+talkto $10
+end
+
+to pchip-check
+clearcom
+sendl (se $aa 5 :who $80 $ff)
+print hexl get-packet
+end
+
+to prl :addr :len
+sendl (se $aa 8 :who $80 $fe byte0 :addr byte1 :addr :len)
+output bf bf bf bf get-packet
+end
+
+to pwl :addr :l
+let [len (count :l) + 7]
+sendl (se $aa :len :who $80 $fd byte0 :addr byte1 :addr :l)
+ignore get-packet
+end
+
+to pwfl :addr :l
+let [len (count :l) + 7]
+sendl (se $aa :len :who $80 $fc byte0 :addr byte1 :addr :l)
+ignore get-packet
+end
+
+to perase-block :addr
+sendl (se $aa 7 :who $80 $fb byte0 :addr byte1 :addr)
+ignore get-packet
+end
+
+to prunvm :addr
+sendl (se $aa 7 :who $80 $fa byte0 :addr byte1 :addr)
+print hexl get-packet
+end
+
+to pprintstream
+sendl (se $aa 5 :who $80 $f9)
+print hexl get-packet
+end
+
+
+to get-packet
+let [res [] c 0]
+loop
+ [make "c recc
+  if :c = -1 [output :res]
+  make "res se :res :c]
+end
+
+to hexl :l
+let [res []]
+dolist [i :l][make "res se :res hb :i]
+output :res
+end
+
+define talkto [n][make "who :n]

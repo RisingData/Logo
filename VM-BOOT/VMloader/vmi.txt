@@ -1,0 +1,960 @@
+        [namereg 4 ip][namereg 5 fp]
+        [namereg 15 t0][namereg 14 t1][namereg 13 t2][namereg 12 t3]
+        [namereg 11 t0i][namereg 10 t1i][namereg 9 t2i][namereg 8 t3i]
+
+
+        [const carry 1][const gie 8] ; in sr
+
+	[const ifg2 3]
+	  [const u0txfg 2][const u0rxfg 1]
+	[const u0rx $66][const u0tx $67]
+	[const u0stat $65]
+	  [const ucbusy 1]
+	[const ta0ctl $160][const ta0ccr0 $172]
+	[const fctl1 $0128][const fctl2 $012a][const fctl3 $012c]
+	[const p3ren $10][const p3sel $1b][const p3out $19]
+        [const wdtctl $120]
+
+
+	[const onpowerup $1040]
+	[const my-num $1000]
+
+
+;words
+	[const return-sp $200]
+	[const bits $202]
+	  [const running 1][const stray-packet 2]
+          [const time-to-stop 4][const packetp 8]
+	  [const respondp $10][const tickphase $20]
+	[const ticks $204]
+	[const outptr $206]
+	[const seed $208]
+        [const timestampl $20a]
+        [const timestamph $20c]
+        [const timestamph-hold $20e]
+        [const reset-timestamp $210]
+;bytes
+	[const silence $212]
+	[const int-inptr $213]
+	[const inlen $214]
+	[const outlen $215]
+	[const respptr $216]
+	[const printptr $217]
+	[const perrors $218]
+	[const plast-error $219]
+	
+
+	[const globals $220]
+	
+	[const int-inbuf $340]
+	[const inbuf $300]
+	  [const pkt-flag $300][const pkt-len $301]
+	  [const pkt-dst $302][const pkt-src $303]
+	  [const pkt-type $304]
+	  [const pkt-data0 $305][const pkt-data1 $306]
+	  [const pkt-data2 $307][const pkt-data3 $308]
+	[const respbuf $2c0]
+	  [const resp-flag $2c0][const resp-len $2c1]
+	  [const resp-dst $2c2][const resp-src $2c3]
+	[const printbuf $280]
+	  
+	[org $2100]
+
+
+;;;;;;;;;;;;;;;
+;
+; startup
+; and main loop
+;
+;;;;;;;;;;;;;;;
+
+
+start	[jmp startup]
+	[jmp .handle-int]
+	[jmp startup]
+
+.handle-int [br #handle-int]
+
+	
+startup	[call #init]
+	[cmp.b #$ff onpowerup][jeq loop]
+	[mov #onpowerup ip]
+loop	[cmp #0 ip][jeq loop]
+	[call #start-eval]
+	[jmp loop]
+
+init	[mov #1499 ta0ccr0]
+	[mov #$292 ta0ctl] 	; smclk/4 up mode, ta ints on
+	[bis.b #$30 p3out]
+	[bis.b #$10 p3ren]
+	[mov #0 bits]
+	[mov.b #$80 silence]
+	[mov.b #0 int-inptr]
+	[mov.b #0 inlen][mov.b #0 outlen]
+	[mov.b #0 respptr][mov.b #0 printptr]
+	[mov #0 ticks][mov #0 reset-timestamp]
+        [mov #0 timestampl][mov #0 timestamph]
+        [mov #0 perrors][mov #0 plast-error]
+        [mov #0 ip]
+	[bis #gie sr]
+	[ret]
+
+
+
+
+
+;;;;;;;;;;;;;;;
+;
+; bytecode interpreter
+;
+;;;;;;;;;;;;;;;
+
+start-eval
+	[mov sp return-sp]
+	[bis #running bits]
+	[bic #time-to-stop bits]
+eval    [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+eval-done
+	[mov #0 ip]
+	[bic #time-to-stop bits]
+	[bic #running bits]
+	[mov return-sp sp]
+        [ret]
+	
+eval-byte
+        [mov.b @ip+ t0]
+        [push t0]
+        [br #eval]
+
+eval-num
+        [mov.b @ip+ t0][mov.b @ip+ t1]
+        [swpb t1][add t1 t0]
+        [push t0]
+        [br #eval]
+
+eval-list
+        [mov.b @ip+ t0][mov.b @ip+ t1]
+        [swpb t1][add t1 t0]
+        [and #$0fff t0]		; place for a type for the decompiler
+        [push ip]
+        [add t0 ip]
+        [br #eval]
+
+eval-eol
+	[bit #time-to-stop bits][jne eval-done]
+        [ret]
+
+eval-eol-retval
+	[bit #time-to-stop bits][jne eval-done]
+        [pop t0][pop t1]
+        [push t0]
+        [br t1]
+
+eval-local-thing
+	[call #get-local-address]
+        [push @t0]
+        [br #eval]
+
+eval-local-make
+	[call #get-local-address]
+        [pop [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+get-local-address
+        [mov.b @ip+ t0]
+        [add t0 t0][sxt t0]
+        [jn gla20]
+        [add #6 t0]
+gla20   [add fp t0]
+        [ret]
+
+eval-ufun
+        [mov.b @ip+ t0][mov.b @ip+ t1]
+        [swpb t1][add t1 t0]    ; fetch the new address
+call-ufun [push ip][mov t0 ip]    ; save old addr, install new addr
+        [mov.b @ip+ t0]         ; push the # of arg bytes
+        [push t0]               ; for use on return
+        [push fp]               ; save and adjust frame pointer
+        [mov sp fp]
+        [mov.b @ip+ t0]         ; fetch the number of local bytes
+        [sub t0 sp]             ; and make room for them
+        [sub t0 sp]
+        [br #eval]
+
+prim-stop
+        [mov fp sp][pop fp]
+        [pop t0]                ; number of args
+        [pop ip]
+        [add t0 sp][add t0 sp]
+        [br #eval]
+
+prim-output
+        [pop t0]
+        [mov fp sp][pop fp]
+        [pop t1]                ; number of arguements
+        [pop ip]
+        [add t1 sp][add t1 sp]
+        [push t0]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-repeat
+        [push ip]
+rep20   [cmp #0 [@sp 4]][jeq rep80]
+        [sub #1 [@sp 4]]
+        [mov [@sp 2] ip]
+        [push #rep20]
+        [br #eval]
+rep80   [pop ip][add #4 sp]
+        [br #eval]
+
+prim-loop
+        [mov @sp ip]
+        [push #prim-loop]
+        [br #eval]
+
+prim-run
+        [pop t0]
+        [br #run-t0]
+
+prim-ifelse
+        [pop t0][pop t1][pop t2]
+        [cmp #0 t2][jeq run-t0]
+        [mov t1 t0]
+        [jmp run-t0]
+
+prim-if [pop t0][pop t1]
+        [cmp #0 t1][jeq if80]
+run-t0  [push ip][mov t0 ip]
+        [push #if50]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+if50    [pop ip]
+if80    [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-waituntil
+        [push ip]
+wun20   [mov [@sp 2] ip]
+        [call #eval]
+        [pop t0][cmp #0 t0]
+        [jeq wun20]
+        [pop ip][add #2 sp]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-print
+        [pop t0]
+pr80	[call #print-decimal]
+	[mov.b #13 t0][call #print-putc]
+	[mov.b @ip+ t0]
+        [add t0 t0]
+        [br [@t0 eval-table]]
+
+print-decimal
+	[push t1][push t2][push t3]
+	[mov t0 t2]
+        [bit #$8000 t2][jeq pr20]
+        [mov.b #45 r15][call #print-putc]
+	[xor #$ffff t2][add #1 t2]
+pr20    [mov #0 t3]
+        [mov #10000 t1][call #print-digit]
+        [mov #1000 t1][call #print-digit]
+        [mov #100 t1][call #print-digit]
+        [mov #10 t1][call #print-digit]
+        [mov #1 t1][call #print-digit]
+        [cmp #0 t3][jne prd80]
+        [mov #$30 t0]
+        [call #print-putc]
+prd80	[pop t3][pop t2][pop t1]
+        [ret]
+
+print-digit
+        [mov #$30 t0]
+pd20    [cmp t1 t2][jnc pd80]
+        [add #1 t0]
+        [add #1 t3]
+        [sub t1 t2]
+        [jmp pd20]
+pd80	[cmp #0 t3][jeq pd90]
+	[br #print-putc]
+pd90	[ret]
+
+prim-prh[pop t0][call #print-hex]
+	[mov.b #13 t0][call #print-putc]
+	[mov.b @ip+ t0]
+        [add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-prhb
+	[pop t0][call #print-hbyte]
+	[mov.b #13 t0][call #print-putc]
+	[mov.b @ip+ t0]
+        [add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-prs
+	[pop t1]
+prs20	[mov.b @t1+ t0]
+	[cmp.b #0 t0][jeq prs80]
+	[call #print-putc]
+	[jmp prs20]
+prs80	[mov.b #13 t0][call #print-putc]
+	[mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-prf
+	[pop t2][pop t1]
+prf20	[mov.b @t1+ t0]
+	[cmp.b #0 t0][jeq prf90]
+	[cmp.b #37 t0][jne prf50]
+	[call #prf-escape]
+	[jmp prf20]
+prf50	[call #print-putc]
+	[jmp prf20]
+prf90	[mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prf-escape
+	[mov.b @t1+ t3][mov t2 t0]
+	[cmp.b #98 t3][jeq print-hbyte]	; %b
+	[cmp.b #119 t3][jeq print-hex]	; %w
+	[cmp.b #100 t3][jeq print-decimal] ; %d
+	[mov.b t3 t0]
+	[br #print-putc]
+
+
+print-hex
+	[push t0][swpb t0]
+	[call #print-hbyte]
+	[pop t0]
+;
+print-hbyte
+	[push t0]
+	[rra t0][rra t0]
+	[rra t0][rra t0]
+	[call #print-hdigit]
+	[pop t0]
+;
+print-hdigit
+	[and #$f t0]
+	[cmp #10 t0]
+	[jnc prhd20]
+	[add #7 t0]
+prhd20	[add #$30 t0]
+	[br #print-putc]
+
+prim-sum
+        [pop t0]
+        [add t0 [@sp 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-diff
+        [pop t1]
+        [sub t1 [@sp 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-mul
+	[pop t0][pop t1]
+	[mov #0 t3]
+        [bit #$8000 t0][jeq pmul20]
+        [xor #$ffff t0][add #1 t0]
+        [xor #1 t3]
+pmul20  [bit #$8000 t1][jeq pmul30]
+        [xor #$ffff t1][add #1 t1]
+        [xor #1 t3]
+pmul30  [call #mul]
+        [cmp #0 t3][jeq pmul40]
+        [xor #$ffff t2][add #1 t2]
+pmul40	[push t2]
+	[mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+
+mul	[mov #0 t2]
+mul20	[bic #carry sr]
+	[rrc t0][jnc mul50]
+	[add t1 t2]
+mul50	[add t1 t1]
+	[add #0 t0][jne mul20]
+	[ret]
+
+
+prim-divide
+        [pop t0][pop t1][mov #0 t2]
+        [push #0]
+        [bit #$8000 t0][jeq pdiv20]
+        [xor #$ffff t0][add #1 t0]
+        [xor #1 [@sp 0]]
+pdiv20  [bit #$8000 t1][jeq pdiv30]
+        [xor #$ffff t1][add #1 t1]
+        [xor #1 [@sp 0]]
+pdiv30  [call #divide]
+        [mov @sp+ t0]
+        [cmp #0 t0]
+        [jeq pdiv90]
+        [xor #$ffff t3][add #1 t3]
+pdiv90  [push t3]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-remainder
+        [pop t0][pop t1][mov #0 t2]
+        [push #0]
+        [bit #$8000 t0][jeq rem20]
+        [xor #$ffff t0][add #1 t0]
+        [xor #1 [@sp 0]]
+rem20	[bit #$8000 t1][jeq rem30]
+        [xor #$ffff t1][add #1 t1]
+        [xor #1 [@sp 0]]
+rem30   [call #divide]
+        [mov @sp+ t0]
+        [cmp #0 t0]
+        [jeq rem90]
+        [xor #$ffff t2][add #1 t2]
+rem90   [push t2]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+; t2:t1 / t0 �> t3
+; remainder in t2
+; (copied from the msp340 app manual)
+divide  [mov #0 t3]
+        [push #17]
+div10   [cmp t0 t2]
+        [jnc div20]
+        [sub t0 t2]
+div20   [addc t3 t3]
+        [sub #1 [@sp 0]]
+        [jeq div40]
+        [add t1 t1]
+        [addc t2 t2]
+        [jnc div10]
+        [sub t0 t2]
+        [bis #1 sr]
+        [jmp div20]
+div40   [add #2 sp]
+        [ret]
+
+prim-and
+        [pop t0]
+        [and t0 [@sp 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-or
+        [pop t0]
+        [bis t0 [@sp 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-xor
+        [pop t0]
+        [xor t0 [@sp 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-not
+        [pop t0]
+        [push #0]
+        [cmp #0 t0]
+        [jne not50]
+        [add #1 [@sp 0]]
+not50   [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+
+prim-lsh
+        [pop t1][pop t0]
+        [bit #$8000 t1][jne lsh-right]
+lsh20   [cmp #0 t1][jeq lsh90]
+        [add t0 t0][sub #1 t1]
+        [jmp lsh20]
+lsh-right
+        [cmp #0 t1][jeq lsh90]
+        [bic #carry sr][rrc t0]
+        [add #1 t1]
+        [jmp lsh-right]
+lsh90   [push t0]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-eq [pop t1][pop t0]
+        [push #0]
+        [cmp t1 t0][jne eq50]
+        [add #1 [@sp 0]]
+eq50    [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-ne [pop t1][pop t0]
+        [push #0]
+        [cmp t1 t0][jeq ne50]
+        [add #1 [@sp 0]]
+ne50    [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-gt [pop t1][pop t0]
+        [push #0]
+        [cmp t1 t0][jeq gr50][jl gr50]
+        [add #1 [@sp 0]]
+gr50    [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-lt [pop t1][pop t0]
+        [push #0]
+        [cmp t1 t0][jge lt50]
+        [add #1 [@sp 0]]
+lt50    [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-random
+        [mov #17 t0]
+        [mov seed t1]
+ran10   [add t1 t1]
+        [bit #$8000 t1][jeq ran20][xor #1 t1]
+ran20   [bit #$0010 t1][jeq ran30][xor #1 t1]
+ran30   [bit #$0004 t1][jeq ran40][xor #1 t1]
+ran40   [bit #$0002 t1][jeq ran50][xor #1 t1]
+ran50   [sub #1 t0][jne ran10]
+        [mov t1 seed]
+        [mov #0 t2][pop t0]
+        [call #divide]
+        [push t2]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-global
+	[pop t0][add t0 t0]
+	[push [@t0 globals]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-setglobal
+	[pop t1][pop t0][add t0 t0]
+	[mov t1 [@t0 globals]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-read
+	[pop t0]
+	[push [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-write
+	[pop t1][pop t0]
+	[mov t1 [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-readb
+	[pop t0]
+	[mov.b [@t0 0] t0][push t0]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-writeb
+	[pop t1][pop t0]
+	[mov.b t1 [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-bset
+	[pop t1][pop t0]
+	[bis t1 [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-bclr
+	[pop t1][pop t0]
+	[bic t1 [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-btst
+	[pop t1][pop t0]
+        [push #0]
+	[bit t1 [@t0 0]][jeq btst50]
+        [add #1 [@sp 0]]
+btst50  [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-bsetb
+	[pop t1][pop t0]
+	[bis.b t1 [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-bclrb
+	[pop t1][pop t0]
+	[bic.b t1 [@t0 0]]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-btstb
+	[pop t1][pop t0]
+        [push #0]
+	[bit.b t1 [@t0 0]][jeq btstb50]
+        [add #1 [@sp 0]]
+btstb50 [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+
+prim-resett
+	[mov #0 ticks]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-timer
+	[push ticks]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-wait
+	[pop t3]
+	[cmp #0 t3][jeq mwait90]
+wait20	[mov #100 t2][call #mwait]
+	[sub #1 t3][jne wait20]
+wait90	[mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+
+prim-mwait
+	[pop t2]
+	[cmp #0 t2][jeq mwait90]
+	[call #mwait]
+mwait90 [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+mwait	[mov ticks t1]
+mwait20	[bit #time-to-stop bits][jne mwait99]
+	[cmp ticks t1][jeq mwait20]
+	[sub #1 t2][jne mwait]
+	[ret]
+mwait99	[br #eval-done]
+
+prim-xwritefb
+      [pop t0][pop t1]
+      [call #flash-byte]
+      [mov.b @ip+ t0][add t0 t0]
+      [br [@t0 eval-table]]
+
+prim-writefb
+      [pop t0][pop t1]
+      [mov t1 t2]
+      [and #$c000 t2][jeq wfb99] ;block the first 16k
+      [cmp #$c000 t2][jne wfb50] ;allow the 2nd and 3rd
+      [mov t1 t2]                ;in the last 16k
+      [and #$f000 t2]            ;block all but
+      [cmp #$e000 t2][jne wfb99] ;$e000-$efff
+wfb50
+	[call #flash-byte]
+wfb99 [mov.b @ip+ t0][add t0 t0]
+      [br [@t0 eval-table]]
+
+
+prim-xeraseseg
+	[pop t1]
+	[call #flash-erase-seg]
+      [mov.b @ip+ t0][add t0 t0]
+      [br [@t0 eval-table]]
+
+prim-eraseseg
+	[pop t1]
+      [mov t1 t2]
+      [and #$c000 t2][jeq ers99] ;block the first 16k
+      [cmp #$c000 t2][jne ers50] ;allow the 2nd and 3rd
+      [mov t1 t2]                ;in the last 16k
+      [and #$f000 t2]            ;block all but
+      [cmp #$e000 t2][jne ers99] ;$e000-$efff
+ers50
+	[call #flash-erase-seg]
+ers99 [mov.b @ip+ t0][add t0 t0]
+      [br [@t0 eval-table]]
+
+prim-timestamph
+        [mov timestampl t0]
+        [mov timestamph t1]
+        [cmp t0 timestampl][jne prim-timestamph]
+        [mov t0 timestamph-hold]
+        [push t1]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-timestampl
+        [push timestamph-hold]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+prim-call
+        [pop t0]
+        [br #call-ufun]
+
+prim-sendpacket
+        [pop t1][pop t0]
+	[bic.b #$20 p3sel][bic.b #$10 p3ren]
+	[mov t0 outptr]
+	[mov.b t1 outlen]
+        [mov.b @ip+ t0][add t0 t0]
+        [br [@t0 eval-table]]
+
+print-putc
+	[push sr][push t1]
+	[bic #gie sr]
+	[mov.b printptr t1]
+	[mov.b t0 [@t1 printbuf]]
+	[cmp.b #$38 printptr][jeq pputc80]
+	[add.b #1 printptr]
+pputc80	[pop t1][pop sr]
+	[ret]
+
+
+;;;;;;;;;;;;;;;
+;
+; command dispatch
+;
+;;;;;;;;;;;;;;;
+
+handle-int
+	[bic #1 ta0ctl]
+	[call #handle-packet-in]
+	[call #handle-packet-out]
+	[call #decode-packet]
+	[xor #tickphase bits]
+	[bit #tickphase bits][jeq hi90]
+	[add #1 ticks]
+	[bic #$8000 ticks]
+        [add #1 timestampl]
+        [cmp #10000 timestampl][jne hi80]
+        [mov #0 timestampl]
+        [add #1 timestamph]
+hi80    [cmp #0 reset-timestamp][jeq hi90]
+        [cmp reset-timestamp timestamph][jeq hi90]
+        [mov #$5a08 wdtctl]
+hi90	[reti]
+
+
+decode-packet
+	[bit #packetp bits][jeq dp90]
+	[call #clear-resp]
+	[call #packet-dispatch]
+	[bic #packetp bits]
+	[bit #respondp bits][jeq dp90]
+	[br #send-resp]
+dp90	[ret]
+	
+packet-dispatch
+	[bis #respondp bits][bic #stray-packet bits]
+	[cmp.b #$aa pkt-flag][jne bad-flag]
+	[cmp.b inlen pkt-len][jne bad-len]
+	[cmp.b my-num pkt-dst][jne not-for-me]
+	[cmp.b #$ff pkt-type][jeq im-here]
+	[cmp.b #$fe pkt-type][jeq read-memory]
+	[cmp.b #$fd pkt-type][jeq write-memory]
+	[cmp.b #$fc pkt-type][jeq write-flash]
+	[cmp.b #$fb pkt-type][jeq erase-flash]
+	[cmp.b #$fa pkt-type][jeq run-vm]
+	[cmp.b #$f9 pkt-type][jeq read-printstream]
+	[cmp.b #$f8 pkt-type][jeq stop-vm]
+	[mov.b #$f2 t0i]		; bad type
+	[jmp pkt-error]
+
+not-for-me
+	[bis #stray-packet bits]
+        [jmp dont-respond]
+bad-flag [mov.b #$f0 t0i][jmp pkt-error]
+bad-len [mov.b #$f1 t0i]
+pkt-error
+	[mov.b t0i plast-error]
+	[add.b #1 perrors]
+dont-respond
+	[bic #respondp bits]
+	[ret]
+
+im-here	[mov.b #37 t0i]
+	[jmp resp-putc]
+
+read-memory
+	[mov.b pkt-data0 t2i][mov.b pkt-data1 t1i]
+	[swpb t1i][add t1i t2i]
+	[mov.b pkt-data2 t3i]
+rm20	[mov.b @t2i t0i][call #resp-putc]
+	[add #1 t2i]
+	[sub #1 t3i][jne rm20]
+	[ret]
+	
+write-memory
+	[mov.b pkt-data0 t2i][mov.b pkt-data1 t1i]
+	[swpb t1i][add t1i t2i]
+	[mov #pkt-data2 t1i]
+	[mov.b pkt-len t3i][sub #7 t3i]
+wm20	[mov.b @t1i+ [@t2i 0]]
+	[add #1 t2i]
+	[sub #1 t3i][jne wm20]
+	[mov.b #$df t0i]
+	[jmp resp-putc]
+	
+write-flash
+	[mov.b pkt-data0 t1i][mov.b pkt-data1 t0i]
+	[swpb t0i][add t0i t1i]
+	[mov #pkt-data2 t3i]
+	[mov.b pkt-len t2i][sub #7 t2i]
+wf20	[mov t1i t0i][bic #$1ff t0i]
+	[cmp #$fe00 t0i][jeq wf40]
+	[mov.b @t3i t0i]
+	[call #flash-byte]
+wf40	[add #1 t1i][add #1 t3i]
+	[sub.b #1 t2i][jne wf20]
+	[mov.b #$cf t0i]
+	[jmp resp-putc]
+
+flash-byte
+	[mov #$a540 fctl3]	; unlock
+	[mov #$a540 fctl1]	; write mode on
+	[mov.b t0i [@t1i 0]]
+	[mov #$a500 fctl1]	; write mode off
+	[mov #$a550 fctl3]	; lock
+	[ret]
+
+erase-flash
+	[mov.b pkt-data0 t1i][mov.b pkt-data1 t0i]
+	[swpb t0i][add t0i t1i]
+	[mov t1i t0i][bic #$1ff t0i]
+	[cmp #$fe00 t0i][jeq erf90]
+	[call #flash-erase-seg]
+	[mov.b #$bf t0i]
+	[jmp resp-putc]
+erf90	[mov.b #$bc t0i]
+	[jmp resp-putc]
+
+	
+flash-erase-seg
+        [mov #$a540 fctl3]	; unlock
+	[mov #$a502 fctl1]	; erase seg on
+	[mov.b t0i [@t1i 0]]
+	[mov #$a500 fctl1]	; write mode off
+	[mov #$a550 fctl3]	; lock
+	[ret]
+
+run-vm
+	[mov.b pkt-data0 t1i][mov.b pkt-data1 t0i]
+	[swpb t0i][add t0i t1i]
+	[mov t1i ip]
+	[mov.b #$af t0i]
+	[jmp resp-putc]
+
+read-printstream
+	[mov.b printptr t3i]
+	[cmp.b #0 t3i][jeq rps90]
+	[mov #printbuf t2i]
+rps20	[mov.b @t2i t0i][call #resp-putc]
+	[add #1 t2i]
+	[sub #1 t3i][jne rps20]
+	[mov.b #0 printptr]
+rps90	[ret]
+
+
+stop-vm	[bis #time-to-stop bits]
+	[mov.b #$8f t0i]
+	[jmp resp-putc]
+
+clear-resp
+	[mov.b #$aa resp-flag]
+	[mov.b #$80 resp-dst][mov.b my-num resp-src]
+	[mov.b #4 respptr]
+	[ret]
+	
+resp-putc
+	[mov.b respptr t1i]
+	[mov.b t0i [@t1i respbuf]]
+	[cmp.b #$3f respptr][jeq rputc90]
+	[add.b #1 respptr]
+rputc90	[ret]
+
+send-resp
+	[bic.b #$20 p3sel][bic.b #$10 p3ren]
+	[mov.b respptr resp-len]
+	[mov #respbuf outptr]
+	[mov.b respptr outlen]
+	[ret]
+	
+
+
+;;;;;;;;;;;;;;;
+;
+; interrupt level
+; uart handling
+;
+;;;;;;;;;;;;;;;
+
+handle-packet-in
+	[bit.b #u0rxfg ifg2][jeq handle-silence]
+hpi50	[call #handle-char-in]
+	[bit.b #u0rxfg ifg2][jne hpi50]
+	[ret]
+	
+handle-char-in
+	[mov.b #0 silence]
+	[mov.b int-inptr t0i]
+	[mov.b u0rx [@t0i int-inbuf]]
+	[cmp.b #$3f int-inptr][jeq hci90]
+	[add.b #1 int-inptr]
+hci90	[ret]
+
+handle-silence
+	[cmp.b #$80 silence][jeq hs90]
+	[add.b #1 silence]
+	[cmp.b #6 silence][jne hs90]
+	[mov #0 t0i]
+hs20	[mov [@t0i int-inbuf][@t0i inbuf]]
+	[add #1 t0i]
+	[cmp #$40 t0i][jne hs20]
+	[mov.b int-inptr inlen]
+	[mov.b #0 int-inptr]
+	[bis #packetp bits]
+hs90	[ret]
+
+handle-packet-out
+	[cmp.b #0 outlen][jeq nothing-to-send]
+	[bit.b #u0txfg ifg2][jeq hpo90]
+	[mov outptr t0i][mov.b @t0i u0tx]
+	[add #1 outptr]
+	[sub.b #1 outlen]
+hpo90	[ret]
+
+nothing-to-send
+	[bit.b #ucbusy u0stat][jne nts90]
+	[bis.b #$10 p3ren][bis #$20 p3sel]
+nts90	[ret]
+	
+;;;;;;;;;;;;;;;
+;
+; primitive table
+;
+;;;;;;;;;;;;;;;
+
+eval-table
+        [dcw eval-done eval-byte eval-num eval-list eval-eol eval-eol-retval
+         eval-local-thing eval-local-make eval-ufun
+         prim-stop prim-output prim-repeat prim-loop prim-if prim-ifelse prim-waituntil
+         prim-print prim-prh prim-prhb prim-prs prim-prf
+         prim-sum prim-diff prim-mul prim-divide prim-remainder
+         prim-and prim-or prim-xor prim-not prim-lsh
+         prim-eq prim-ne prim-gt prim-lt prim-random
+         prim-global prim-setglobal
+         prim-read prim-write prim-readb prim-writeb
+         prim-bset prim-bclr prim-btst
+         prim-bsetb prim-bclrb prim-btstb
+         prim-resett prim-timer prim-wait prim-mwait
+	 prim-writefb prim-eraseseg
+         prim-timestampl prim-timestamph
+         prim-xwritefb prim-xeraseseg
+         prim-call prim-run prim-sendpacket
+         ]
+
+end

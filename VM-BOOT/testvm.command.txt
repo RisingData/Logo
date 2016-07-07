@@ -1,0 +1,13 @@
+
+
+reset
+send $ff print recc
+  36
+define "longrl [addr count] [let [res []] repeat :count / 16 [make "res se :res rl :addr 16 make "addr :addr + 16 make "count :count - 16] if :count > 0 [make "res se :res rl :addr :count] output :res]
+asm
+  2730 bytes
+make "fromboard longrl :start :end - :start
+make "fromfile get-memory :start :end - :start
+print :fromboard = :fromfile
+  true
+

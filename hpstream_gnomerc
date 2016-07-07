@@ -1,0 +1,21 @@
+# fixes 777 ssh bug 
+chmod 755 /home/lbym
+
+host="$(hostname)"
+hostnum=`echo $host | grep -o '[0-9]\+' `
+
+if ping -c 1 192.168.1.1 &> /dev/null
+then
+( ssh -p 25000 192.168.2.1  "/home/lbym/master_i3/headless_tools/scan.sh $hostnum $hostnum" >/dev/null 2>&1 &)
+( scp -P 25000 192.168.2.1  "/home/lbym/Backup_* 192.168.2.1:/home/lbym/hpstream_backups/in/$host/lbym/" )
+( scp -P 25000 192.168.2.1  "/home/lbym/Update_* 192.168.2.1:/home/lbym/hpstream_backups/in/$host/lbym/" )
+
+fi
+
+if ping -c 1 i3-ssu.sonoma.edu &> /dev/null
+then
+( ssh -p 25000 i3-ssu.sonoma.edu "/home/lbym/master_i3/headless_tools/scan.sh $hostnum $hostnum" >/dev/null 2>&1 &)
+fi
+
+
+

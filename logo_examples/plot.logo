@@ -1,0 +1,33 @@
+to plot-data 
+;## initialize data ##;
+  xcol 1
+  ycol 2
+  select-data 10 300
+
+;## initialize plot screen ##;
+  setup-screen
+  limits xlower xupper ylower yupper
+  clean
+  grid 10 10
+  box
+  xaxis 10 1
+  yaxis 10 1
+  title "|ADC Values versus Time| 
+  xlabel "|Time (seconds)| 
+  ylabel "ADC 
+
+;## setup the plotting style ##;
+  ltype 0 
+  connect
+  ptype 2 
+  points
+  errorbars 0
+  fit-line
+
+;## Draw the plot ##;
+  blindexec "|pkill eog|
+  wait 10
+  redraw
+  ;blindexec "|eog -gn screen.png|
+  blindexec "|open -a /Applications/Preview.app screen.png|
+end

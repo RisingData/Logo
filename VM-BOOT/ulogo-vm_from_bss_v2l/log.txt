@@ -1,0 +1,1369 @@
+Welcome to Logo!
+asm
+  2626 bytes
+send $ff print recc
+  36
+dump $1040 0
+  1040 - 08 00 D2 00 FF FF FF FF 08 39 D2 00 FF FF FF FF
+dump $1040 20
+  1040 - 08 00 D2 00 FF FF FF FF 08 39 D2 00 FF FF FF FF
+  1050 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+download
+  downloaded.
+dump $1040 20
+  1040 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+  1050 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+send $ff print recc
+  36
+asm
+  2626 bytes
+download
+  downloaded.
+Welcome to Logo!
+print files ".
+  /home/pico/ulogo-v2e/ulogo-vm/vm.txt /home/pico/ulogo-v2e/ulogo-vm/logo /home/pico/ulogo-v2e/ulogo-vm/log.txt /home/pico/ulogo-v2e/ulogo-vm/jl.sh /home/pico/ulogo-v2e/ulogo-vm/startup.logo
+print filetostring "startup.logo
+  to startup
+load "logo/assembler
+load "logo/uartcomms
+load "logo/packets
+if not name? "inited [make "inited true assembler-startup start-comms packet-start]
+end
+
+
+define byte0 [n][output logand :n $ff]
+define byte1 [n][output logand lsh :n -8 $ff]
+define hb [n][output hexw logand $ff :n 2]
+define hw [n][output hexw logand $ffff :n 4]
+define .word [a b][output intern word :a :b]
+
+define rr[][reload startup]
+define clear-log [][erfile "log.txt]
+
+
+print filetostring "./startup.logo
+  to startup
+load "logo/assembler
+load "logo/uartcomms
+load "logo/packets
+if not name? "inited [make "inited true assembler-startup start-comms packet-start]
+end
+
+
+define byte0 [n][output logand :n $ff]
+define byte1 [n][output logand lsh :n -8 $ff]
+define hb [n][output hexw logand $ff :n 2]
+define hw [n][output hexw logand $ffff :n 4]
+define .word [a b][output intern word :a :b]
+
+define rr[][reload startup]
+define clear-log [][erfile "log.txt]
+
+
+print filetostring "../startup.logo
+  Can't open file ../startup.logo
+print file "..
+  I don't know how to file
+print files "..
+  /home/pico/ulogo-v2e/ulogo-vm /home/pico/ulogo-v2e/ulogo
+dolist [i files ".][print :i
+  /home/pico/ulogo-v2e/ulogo-vm/vm.txt
+  /home/pico/ulogo-v2e/ulogo-vm/logo
+  /home/pico/ulogo-v2e/ulogo-vm/log.txt
+  /home/pico/ulogo-v2e/ulogo-vm/jl.sh
+  /home/pico/ulogo-v2e/ulogo-vm/startup.logo
+print getproperty "home.dir
+  
+print getproperty "user.dir
+  /home/pico/ulogo-v2e/ulogo-vm
+print getproperty "lib.dir
+  
+print getproperty "user.home
+  /home/pico
+print getproperty "user.timezone
+  
+print getproperty "user.region
+  
+print getproperty "file.encoding
+  ANSI_X3.4-1968
+print getproperty "file.separator
+  /
+print getproperty "java.version
+  1.7.0_55
+print getproperty "java.vendor
+  Oracle Corporation
+print getproperty "os.arch
+  amd64
+print getproperty "java.class.path
+  /usr/share/javalogo/jl.jar
+print getproperty "java.class.version
+  51.0
+print getproperty "java.io.tmpdir
+  /tmp
+print getproperty "line.separator
+  
+
+print ascii getproperty "line.separator
+  10
+print count getproperty "line.separator
+  1
+print count getproperty "java.library.patj
+  0
+print count getproperty "java.library.path
+  133
+print getproperty "java.library.path
+  /usr/java/packages/lib/amd64:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib
+print getproperty "java.vm.name
+  OpenJDK 64-Bit Server VM
+
+print getproperty "sun.boot.class.path
+  /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/netx.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/plugin.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rhino.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/classes
+Welcome to Logo!
+reset
+  exec: java.io.IOException: Cannot run program "./ioctl": error=2, No such file or directory ./ioctl /dev/ttyUSB0 0 0 0 in ioctrl
+Welcome to Logo!
+send $ff print recc
+  -1
+reset
+send $ff print recc
+  36
+runvm
+send $ff print recc
+  -1
+reset
+send $ff print recc
+  36
+
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+runvm
+print pchip-check
+  AA 05 80 10 25
+  pchip-check didn't output to print
+pchip-check
+  AA 05 80 10 25
+pdump $1000 0
+  I don't know how to pdump
+print prl $1000 5
+  16 255 255 255 255
+reset
+dump $1040 0
+  1040 - 08 00 D2 00 FF FF FF FF 08 39 D2 00 FF FF FF FF
+print :port
+  /dev/ttyUSB0
+Welcome to Logo!
+send $ff print recc
+  -1
+
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+
+Welcome to Logo!
+send $ff print recc
+  -1
+
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 10
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 10
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 10
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+asm
+  2730 bytes
+download
+Welcome to Logo!
+asm
+  2730 bytes
+download
+  downloaded.
+Welcome to Logo!
+asm
+  2730 bytes
+download
+  downloaded.
+Welcome to Logo!
+asm
+  2730 bytes
+send $ff print recc
+  36
+download
+  downloaded.
+
+
+
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+asm
+  2730 bytes
+download
+  downloaded.
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  dongle not found
+Welcome to Logo!
+  dongle not found
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  dongle not found
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  dongle not found
+Welcome to Logo!
+  dongle not found
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+Welcome to Logo!
+  dongle not found
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000
+  dump needs more inputs
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  dongle not found
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+Welcome to Logo!
+send 4ff print recc
+  I don't know how to 4ff
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  36
+Welcome to Logo!
+Welcome to Logo!
+send $ff print recc
+  36
+
+Welcome to Logo!
+Welcome to Logo!
+.init-newboard
+  I don't know how to .init-newboard
+  Welcome to Logo
+send $ff print recc
+  I don't know how to send
+Welcome to Logo!
+  can't open port /dev/ttyUSB0 in open-linux-port
+Welcome to Logo!
+send $ff print recc
+  36
+Welcome to Logo!
+.init-newboard
+  I don't know how to .init-newboard
+Welcome to Logo!
+  can't open port /dev/ttyUSB0 in open-linux-port
+Welcome to Logo!
+  can't open port /dev/ttyUSB0 in open-linux-port
+Welcome to Logo!
+reset
+send $ff print recc
+  36
+define "longrl [addr count] [let [res []] repeat :count / 16 [make "res se :res rl :addr 16 make "addr :addr + 16 make "count :count - 16] if :count > 0 [make "res se :res rl :addr :count] output :res]
+asm
+  2730 bytes
+make "fromboard longrl :start :end - :start
+make "fromfile get-memory :start :end - :start
+print :fromboard = :fromfile
+  true
+
+download
+  downloaded.
+make "fromboard longrl :start :end - :start
+print :fromboard = :fromfile
+  true
+Welcome to Logo!
+reset
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  36
+asm
+  2730 bytes
+define "longrl [addr count] [let [res []] repeat :count / 16 [make "res se :res rl :addr 16 make "addr :addr + 16 make "count :count - 16] if :count > 0 [make "res se :res rl :addr :count] output :res]
+make "fromboard longrl :start :end - :start
+make "fromfile get-memory :start :end - :start
+print :fromboard = :fromfile
+  true
+Welcome to Logo!
+  
+send $ff print recc
+  36
+define "longrl [addr count] [let [res []] repeat :count / 16 [make "res se :res rl :addr 16 make "addr :addr + 16 make "count :count - 16] if :count > 0 [make "res se :res rl :addr :count] output :res]
+make "fromboard longrl :start :end - :start
+  start has no value
+asm
+  2730 bytes
+make "fromboard longrl :start :end - :start
+make "fromfile get-memory :start :end - :start
+print :fromboard = :fromfile
+  false
+download
+  downloaded.
+make "fromboard longrl :start :end - :start
+print :fromboard = :fromfile
+  true
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  36
+define "longrl [addr count] [let [res []] repeat :count / 16 [make "res se :res rl :addr 16 make "addr :addr + 16 make "count :count - 16] if :count > 0 [make "res se :res rl :addr :count] output :res]
+asm
+  2730 bytes
+make "fromboard longrl :start :end - :start
+make "fromfile get-memory :start :end - :start
+print :fromboard = :fromfile
+  true
+Welcome to Logo!
+  
+put "foo "bar 5
+print plist :foo
+  foo has no value
+print plist "foo
+  bar 5
+perase "foo "bar
+  I don't know how to perase
+Welcome to Logo!
+  Can't open file startup.logo
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+.project "NewBoard
+  I don't know how to .project
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+downbload
+  I don't know how to downbload
+download
+  downloaded.
+dump $1000 0
+  1000 - AA 55 FF 3F CD AB AA 55 34 12 FF FF 55 AA FF FF
+erase-seg $1000
+wfl $1000 [16]
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  255
+send $ff print recc
+  255
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+Welcome to Logo!
+  
+send $ff print recc
+  255
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+
+
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0]
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dumpb $1000 0
+  I don't know how to dumpb
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff printrecc
+  I don't know how to printrecc
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  255
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+Welcome to Logo!
+  
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  36
+download
+  end has no value in download
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 0
+  1000 - 10 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+send $ff print recc
+  36
+asm
+  2730 bytes
+download
+  downloaded.
+dump $1000 10
+  1000 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+download
+  downloaded.
+send $ff print recc
+  -1
+send $ff print recc
+  36
+dump $1000 10
+  1000 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+dump $1000 10
+  1000 - FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+as
+  I don't know how to as
+asm
+  2730 bytes
+download
+  downloaded.
+send $ff print recc
+  -1
+send $ff print recc
+  36
+send $ff print recc
+  -1
+send $ff print recc
+  36
+send $ff print recc
+  -1
+
+
+send $ff print recc
+  36
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+Welcome to Logo!
+  
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+
+send $ff print recc
+  -1
+
+
+
+send $ff print recc
+  -1
+send $ff print recc
+  -1
+send $ff print recc
+  -1

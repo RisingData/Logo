@@ -1,0 +1,130 @@
+;##############################################################################
+;  File: vm_check.logo
+;  By: Andru Luvisi 
+;      Ben Cunningham
+;  Last Modified: 2016-01-01
+;
+;  Purpose:
+;    App-Board VM integraty check and version identification
+;
+;  Words:
+;    vm? - Reads the VM on the app-board and compares it to all available
+;            vm ulogo code. Returns a list of matching vm versions.
+;  Supporting Words:
+;    past-asm :file
+;    longrl :addr :count
+;    
+;##############################################################################
+to vm?
+  let [fromboard "
+       frompast "
+       matchingVMList "
+       vmlist vmFiles
+       mnStartmxLen "
+       mnStartmxEnd "
+       maxEnd " ]
+  let [temp makelist count :vmlist]
+
+  print "+++++
+  print "|Finding the maximum VM length from all past VM versions.|
+  print "+++++
+  dotimes [i count :vmlist]
+          [past-asm (nth :i :vmlist)
+           (setnth :i :temp (list (nth :i :vmlist) 
+                                  :start
+                                  (difference :end :start)))
+           ifelse 0 = :i
+             [make "mnStartmxLen (list :start (difference :end :start))]
+             [make "mnStartmxLen (list min (nth 0 :mnStartmxLen) :start 
+                                       max (nth 1 :mnStartmxLen)
+                                           (difference :end :start))]]
+
+  make "fromboard (longrl (nth 0 :mnStartmxLen) (nth 1 :mnStartmxLen) )
+
+  print "
+  print  "=====
+  print "|Compairing App-Board VM with past VM versions|
+  print "=====
+
+  dolist [version :temp]
+         [past-asm (nth 0 :version)
+          make "frompast get-memory :start difference :end :start
+
+          let [temp2 :fromboard ]
+          dotimes [i difference count :fromboard (nth 2 :version)]
+                  [make "temp2 bl :temp2]
+
+          if and (equal? (difference :end :start) (nth 2 :version))
+                 (equal? :frompast :temp2)
+                 [make "matchingVMList se :matchingVMList (nth 0 :version)]]
+
+  VMresults :matchingVMList
+  asm
+end
+
+to past-asm :file
+  print se "|Size of| :file
+  assemble :file
+end
+
+to longrl :addr :count
+  let [res []]
+  repeat quotient :count 16 [
+    make "res se :res rl :addr 16
+    make "addr sum :addr 16 
+    make "count difference :count 16]
+  if greater? :count 0 [make "res se :res rl :addr :count]
+  output :res
+end
+
+;___________________________________________________
+; Parses the present directory for vm files.
+; ".txt" files with a substring of "vm" are returned
+;  as a list
+;___________________________________________________
+to vmFiles
+  let [longFiles (files ".)
+       vmFiles []
+       singleFile [] ]
+  
+  if less? 0 (count :longFiles) [
+    dolist [fileName :longFiles]
+      [make "singleFile filenamefrompath :fileName
+       if and (and (member? ".txt :singleFile)(member? "vm :singleFile))
+              (not member? "dump :singleFile)
+         [make "vmFiles se :vmFiles :singleFile]
+       ]
+  ]
+  output :vmFiles
+end
+
+to VMresults :inLst
+  ifelse greater? (count :inLst) 0
+    [let [matches rmDoubles :inLst]
+     print "
+     print "*****
+     print (se "|App-Board VM matches:| :matches)
+     print "*****]
+    [let [tm now
+          topdir "data/
+          subdir word :topdir "vmDump/ ]
+     if not file? :topdir [mkdir :topdir]
+     if not file? :subdir [mkdir :subdir]
+     print "
+     print "*****
+     print "|No matching VM found.|
+     print (word "|Dumping App-Board's VM into | :subdir "|VMdump| :tm ".txt)
+     stringtofile (word :subdir "|VMdump| :tm ".txt) :fromboard
+     print (word "|Hex Dump of VMdump| :tm ".txt "| found in | char 10 char 32
+                 char 32 :subdir "|VMdump| :tm "_HEX_.txt)
+     stringtofile (word :subdir "|VMdump| :tm "_HEX_.txt)
+                  exec (se "|hexdump -C| (word :subdir "|VMdump| :tm ".txt)]
+end
+
+to rmDoubles :list_in
+  let [list_out " ]
+  dolist [elm :list_in]
+    [if not member? :elm :list_out
+       [make "list_out (se :list_out :elm)]]
+  output :list_out
+end
