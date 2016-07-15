@@ -10,9 +10,6 @@ then
   exit 1
 else
 
-/usr/bin/killall -q  xv
-/usr/bin/killall -q java
-/usr/local/i3/usbreset.sh
 set -f
 (while true; do read -e lastcmd; history -s $lastcmd; echo $lastcmd; done) | java -jar /usr/local/i3/jl.jar "$@" /usr/local/i3/logo/project 
  exit 0

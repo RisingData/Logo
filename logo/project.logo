@@ -32,17 +32,8 @@ to jproject :n
   setup-screen
   start_log
   make "playback true
-  save-code
 end
 
-to save-code
-  blindexec "|/usr/local/i3/i3-save.sh|
-end
-
-to usbreset
-  blindexec "|/usr/local/i3/usbreset.sh|
-end
- 
 to project :n 
   restart-wifi
   make "project-name :n
@@ -58,8 +49,6 @@ to project :n
   setup-screen
   start_log
   make "playback false 
-;  usbreset
-  save-code 
 end
 
 to start_log

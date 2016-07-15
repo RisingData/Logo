@@ -1,8 +1,0 @@
-#!/bin/bash
-rm -f .meet
- /usr/local/i3/tools/dtach -c .meet bash
-rm -f /home/lbym/.meet
-ln -s $dirname/.meet  /home/lbym/.meet
-
-# exec bash jl
-
